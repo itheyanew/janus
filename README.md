@@ -23,17 +23,6 @@ Links :
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	From <https://github.com/IBM/janusgraph-utils/blob/master/doc/source/images/architecture.png> 
 	
 	
@@ -44,3 +33,7 @@ Links :
 	
 	
 	https://www.experoinc.com/post/developing-a-janusgraph-backed-service-on-gcp
+
+
+start gremlin.bat
+start gremlin-server.bat D:\soft\elk\janusgraph-full-0.5.2\conf\gremlin-server\gremlin-server.yaml
