@@ -37,3 +37,360 @@ Links :
 
 start gremlin.bat
 start gremlin-server.bat D:\soft\elk\janusgraph-full-0.5.2\conf\gremlin-server\gremlin-server.yaml
+
+
+
+
+------------------------------
+
+// Step 1 - Initial Schema Example - Setup
+
+//
+
+// Run with a Gremlin Console from the command line:
+
+// $ bin/gremlin -i InitialSetup.groovy
+
+//
+
+// We use an in-memory graph for all testing
+
+// This supports our data modelling graph operations and
+
+// simplifies our setup without requiring an external storage backend.
+
+graph = JanusGraphFactory.build().
+
+  set('storage.backend', 'inmemory').open()
+
+
+
+
+
+//-----------------------
+
+// Load the Initial Schema
+
+//-----------------------
+
+mgmt = graph.openManagement()
+
+
+
+// Define Vertex labels
+
+Orchestra = mgmt.makeVertexLabel('Orchestra').make()
+
+Artist = mgmt.makeVertexLabel('Artist').make()
+
+Work = mgmt.makeVertexLabel('Work').make()
+
+Concert = mgmt.makeVertexLabel('Concert').make()
+
+
+
+// Define Edge labels - the relationships between Vertices
+
+COMPOSER = mgmt.makeEdgeLabel('COMPOSER').multiplicity(MANY2ONE).make()
+
+SOLOIST = mgmt.makeEdgeLabel('SOLOIST').multiplicity(SIMPLE).make()
+
+CONDUCTOR = mgmt.makeEdgeLabel('CONDUCTOR').multiplicity(SIMPLE).make()
+
+ORCHESTRA = mgmt.makeEdgeLabel('ORCHESTRA').multiplicity(SIMPLE).make()
+
+INCLUDES = mgmt.makeEdgeLabel('INCLUDES').multiplicity(SIMPLE).make()
+
+
+
+// Define Vertex Property Keys
+
+// Orchestra
+
+name = mgmt.makePropertyKey('name').
+
+  dataType(String.class).cardinality(Cardinality.SINGLE).make()
+
+
+
+mgmt.addProperties(Orchestra, name)
+
+
+
+
+
+// Artist
+
+lastName = mgmt.makePropertyKey('lastName').
+
+  dataType(String.class).cardinality(Cardinality.SINGLE).make()
+
+firstName = mgmt.makePropertyKey('firstName').
+
+  dataType(String.class).cardinality(Cardinality.SINGLE).make()
+
+gender = mgmt.makePropertyKey('gender').
+
+  dataType(String.class).cardinality(Cardinality.SINGLE).make()
+
+nationality = mgmt.makePropertyKey('nationality').
+
+  dataType(String.class).cardinality(Cardinality.SINGLE).make()
+
+deceased = mgmt.makePropertyKey('deceased').
+
+  dataType(Boolean.class).cardinality(Cardinality.SINGLE).make()
+
+
+
+mgmt.addProperties(Artist, lastName, firstName, gender, nationality, deceased)
+
+
+
+
+
+// Work
+
+title = mgmt.makePropertyKey('title').
+
+  dataType(String.class).cardinality(Cardinality.SINGLE).make()
+
+compositionDate = mgmt.makePropertyKey('compositionYear').
+
+  dataType(Integer.class).cardinality(Cardinality.SINGLE).make()
+
+soloInstrument = mgmt.makePropertyKey('soloInstrument').
+
+  dataType(String.class).cardinality(Cardinality.SINGLE).make()
+
+
+
+mgmt.addProperties(Work, title, compositionDate, soloInstrument)
+
+
+
+
+
+// Concert
+
+firstDate = mgmt.makePropertyKey('firstDate').
+
+  dataType(String.class).cardinality(Cardinality.SINGLE).make()
+
+numShows = mgmt.makePropertyKey('numShows').
+
+  dataType(Integer.class).cardinality(Cardinality.SINGLE).make()
+
+
+
+mgmt.addProperties(Concert, name, firstDate, numShows)
+
+
+
+// Define connections as (EdgeLabel, VertexLabel out, VertexLabel in)
+
+mgmt.addConnection(COMPOSER, Work, Artist)
+
+mgmt.addConnection(SOLOIST, Work, Artist)
+
+mgmt.addConnection(CONDUCTOR, Work, Artist)
+
+mgmt.addConnection(ORCHESTRA, Concert, Orchestra)
+
+mgmt.addConnection(INCLUDES, Concert, Work)
+
+
+
+mgmt.commit()
+
+
+
+
+
+//-----------------------
+
+// Add Sample Data
+
+//-----------------------
+
+g = graph.traversal()
+
+// Make an Orchestra
+
+nyPhil = g.addV('Orchestra').property('name', 'New York Philharmonic').next()
+
+cso = g.addV('Orchestra').property('name', 'Chicago Symphony Orchestra').next()
+
+
+
+// Make 4 Artists
+
+salonen = g.addV('Artist').
+
+  property('lastName', 'Salonen').
+
+  property('firstName', 'Esa-Pekka').
+
+  property('gender', 'Male').
+
+  property('nationality', 'Finnish').next()
+
+
+
+strauss = g.addV('Artist').
+
+  property('lastName', 'Strauss').
+
+  property('firstName', 'Richard').
+
+  property('gender', 'Male').
+
+  property('nationality', 'German').
+
+  property('deceased', true).next()
+
+
+
+gilbert = g.addV('Artist').
+
+  property('lastName', 'Gilbert').
+
+  property('firstName', 'Alan').next()
+
+
+
+ma = g.addV('Artist').
+
+  property('lastName', 'Ma').
+
+  property('firstName', 'Yo-Yo').next()
+
+
+
+// Make 3 Works
+
+alsoSprach = g.addV('Work').
+
+  property('title',"Also sprach Zarathustra").
+
+  property('compositionYear', 1896).next()
+
+
+
+wing = g.addV('Work').
+
+  property('title',"Wing on Wing").
+
+  property('compositionYear', 2004).next()
+
+
+
+celloConcerto = g.addV('Work').
+
+  property('title', 'Cello Concerto').
+
+  property('compositionYear', 2017).
+
+  property('soloInstrument', 'cello').next()
+
+
+
+// Make 3 concerts
+
+concert1 = g.addV('Concert').
+
+  property('name', 'Esa-Pekka Salonen Conducts US Premiere by Tansy Davies').
+
+  property('firstDate', '4/27/2017').
+
+  property('numShows', 3).next()
+
+
+
+concert2 = g.addV('Concert').
+
+  property('name', 'Premieres by Esa-Pekka Salonen and Anna Thorvaldsdottir').
+
+  property('firstDate', '5/19/2017').
+
+  property('numShows', 3).next()
+
+
+
+concert3 = g.addV('Concert').
+
+  property('name', 'Salonen & Yo-Yo Ma').
+
+  property('firstDate', '3/9/2017').
+
+  property('numShows', 3).next()
+
+
+
+// Add relationships
+
+// INCLUDES
+
+g.addE('INCLUDES').from(concert1).to(alsoSprach).iterate()
+
+g.addE('INCLUDES').from(concert2).to(wing).iterate()
+
+g.addE('INCLUDES').from(concert3).to(celloConcerto).iterate()
+
+
+
+// ORCHESTRA
+
+g.addE('ORCHESTRA').from(concert1).to(nyPhil).next()
+
+g.addE('ORCHESTRA').from(concert2).to(nyPhil).next()
+
+g.addE('ORCHESTRA').from(concert3).to(cso).next()
+
+
+
+// COMPOSER
+
+g.addE('COMPOSER').from(celloConcerto).to(salonen).next()
+
+g.addE('COMPOSER').from(alsoSprach).to(strauss).next()
+
+g.addE('COMPOSER').from(wing).to(salonen).next()
+
+
+
+// CONDUCTOR
+
+g.addE('CONDUCTOR').from(celloConcerto).to(salonen).next()
+
+g.addE('CONDUCTOR').from(alsoSprach).to(salonen).next()
+
+g.addE('CONDUCTOR').from(wing).to(gilbert).next()
+
+
+
+// SOLOIST
+
+g.addE('SOLOIST').from(celloConcerto).to(ma).next()
+
+
+
+g.tx().commit()
+
+
+
+// We can use some simple asserts to check our data model
+
+assert 4 == g.V().hasLabel('Artist').count().next()
+
+assert 3 == g.V().hasLabel('Concert').count().next()
+
+
+
+assert 'Ma' == g.V().has('Orchestra', 'name', 'Chicago Symphony Orchestra').
+
+  in('ORCHESTRA').has('Concert', 'name', 'Salonen & Yo-Yo Ma').
+
+  out('INCLUDES').has('Work', 'title', 'Cello Concerto').
+
+  out('SOLOIST').hasLabel('Artist').values('lastName').next()
