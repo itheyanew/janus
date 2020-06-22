@@ -394,3 +394,20 @@ assert 'Ma' == g.V().has('Orchestra', 'name', 'Chicago Symphony Orchestra').
   out('INCLUDES').has('Work', 'title', 'Cello Concerto').
 
   out('SOLOIST').hasLabel('Artist').values('lastName').next()
+
+
+
+-------------------------------------------
+https://stackoverflow.com/questions/59906848/how-to-get-the-combined-vertex-and-edge-properties-with-gremlin-and-janusgraph
+
+List<Map<String, Object>> propertyList = g.V("V_ID")   // Get the vertex
+.outE().hasLabel("OUT_EDGE").as("E")                   // Get the outgoing edge as E
+.inV().as("V")                                         // Get the vertex(pointed by E) as V
+.select("E", "V")                                      // Select Edge E and Vertex V
+.by(__.valueMap().with(WithOptions.tokens).unfold()    // Get value map including tokens
+.group().by(Column.keys).by(__.select(Column.values).unfold()))  // Form key value pairs
+.toList();                                             // Return the list of properties
+NOTE: Replace the sample strings ("V_ID", "OUT_EDGE") tokens as per your implementation
+The above query will return all the properties of edges and its associated vertex in java map. The property map will also contain the tokens (i.e. id, label).
+Here I had to group and unfold the valueMap() since the valueMap() by default wraps the Value field inside an array and I do not want this behavior since I have all the properties with single value so there is no point in getting a list that contains a single value.
+You now have all the edge and associated vertex properties merged and available with the propertyList.
